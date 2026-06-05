@@ -1,0 +1,77 @@
+{
+  "name": "voice-form-fill",
+  "version": "0.1.0",
+  "description": "Voice/text-to-form auto-filling component for Vue 3. Speak or type natural language, and an LLM extracts structured data to fill form fields.",
+  "keywords": [
+    "vue",
+    "voice",
+    "form",
+    "stt",
+    "llm",
+    "speech-to-text",
+    "form-fill",
+    "deepseek",
+    "openai",
+    "iflytek",
+    "xunfei",
+    "asr"
+  ],
+  "license": "MIT",
+  "author": "tinyxinxin <tinyxinxin@hotmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tinyxinxin/voice-form-fill"
+  },
+  "homepage": "https://github.com/tinyxinxin/voice-form-fill#readme",
+  "bugs": {
+    "url": "https://github.com/tinyxinxin/voice-form-fill/issues"
+  },
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE"
+  ],
+  "main": "./dist/voice-form-fill.umd.cjs",
+  "module": "./dist/voice-form-fill.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/voice-form-fill.js",
+      "require": "./dist/voice-form-fill.umd.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "dev": "vite --open demo/index.html",
+    "build": "vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.vue",
+    "typecheck": "vue-tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.5",
+    "rollup": "^4.61.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^3.9.0",
+    "vue": "^3.4.0",
+    "vue-tsc": "^2.0.0"
+  }
+}
