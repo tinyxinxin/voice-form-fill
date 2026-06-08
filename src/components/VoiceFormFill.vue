@@ -179,6 +179,7 @@ import {
   useSttRecorder,
   type STTAdapterType,
 } from '../composables/useSttRecorder'
+import { setDebug } from '../core/logger'
 
 const props = withDefaults(
   defineProps<{
@@ -204,6 +205,7 @@ const props = withDefaults(
     }
     textInput?: boolean
     visible?: boolean
+    debug?: boolean
   }>(),
   {
     title: 'Voice Form Fill',
@@ -211,6 +213,7 @@ const props = withDefaults(
     sttAdapter: 'web-speech',
     textInput: true,
     visible: false,
+    debug: false,
   }
 )
 
@@ -229,6 +232,15 @@ watch(
   (v) => {
     panelVisible.value = v
   }
+)
+
+// 调试模式开关
+watch(
+  () => props.debug,
+  (v) => {
+    setDebug(v)
+  },
+  { immediate: true }
 )
 
 // Tab 状态

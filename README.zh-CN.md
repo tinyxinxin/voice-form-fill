@@ -128,6 +128,7 @@ function onComplete(result) {
 | `sttConfig` | `object` | — | STT 配置选项 |
 | `textInput` | `boolean` | `true` | 显示文本输入标签页 |
 | `visible` | `boolean` | `false` | 面板可见性（支持 v-model） |
+| `debug` | `boolean` | `false` | 启用调试日志 |
 
 ### 事件
 
@@ -146,6 +147,25 @@ function onComplete(result) {
 | `trigger` | `{ toggle, recording }` | 自定义触发按钮 |
 | `header` | `{ title, close }` | 自定义面板头部 |
 | `result` | `{ success, failed, loading }` | 自定义结果展示 |
+
+### 调试日志
+
+通过 `debug` 属性或 `setDebug` API 开启详细的运行日志，方便排查问题：
+
+```vue
+<!-- 组件属性方式 -->
+<VoiceFormFill :debug="true" ... />
+```
+
+```typescript
+// 编程方式
+import { setDebug } from 'voice-form-fill'
+
+setDebug(true)  // 开启
+setDebug(false) // 关闭（默认）
+```
+
+所有日志带有 `[VoiceFormFill]` 前缀，包含 LLM 调用耗时、语音识别状态变化、字段提取、匹配和填充等详细信息。警告和错误日志始终输出，不受 debug 开关影响。
 
 ## 进阶用法
 

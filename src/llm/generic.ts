@@ -1,5 +1,6 @@
 import type { LLMAdapter, LLMCallOptions } from './types'
 import { buildPrompt, parseJsonFromLLMResponse } from './types'
+import { debug } from '../core/logger'
 
 /**
  * 通用 OpenAI-compatible 适配器
@@ -31,20 +32,26 @@ export class GenericLLMAdapter implements LLMAdapter {
       headers['Authorization'] = `Bearer ${apiKey}`
     }
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const url = `${baseUrl}/chat/completions`
+    const body = {
+      model: model ?? this.defaultModel,
+      messages: [
+        {
+          role: 'user',
+          content: buildPrompt(formStructure, userText),
+        },
+      ],
+      temperature,
+      max_tokens: maxTokens,
+    }
+
+    debug('Generic LLM API call:', url, 'model:', body.model)
+    const t0 = performance.now()
+
+    const response = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        model: model ?? this.defaultModel,
-        messages: [
-          {
-            role: 'user',
-            content: buildPrompt(formStructure, userText),
-          },
-        ],
-        temperature,
-        max_tokens: maxTokens,
-      }),
+      body: JSON.stringify(body),
       signal,
     })
 
@@ -56,6 +63,7 @@ export class GenericLLMAdapter implements LLMAdapter {
     }
 
     const data = await response.json()
+    debug('Generic LLM API response:', `(${((performance.now() - t0) / 1000).toFixed(2)}s)`)
     const content = data.choices?.[0]?.message?.content
     if (!content) throw new Error('LLM API returned empty response')
 

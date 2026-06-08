@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import type { LLMAdapter } from '../llm/types'
 import { processVoiceFill } from '../core/orchestrator'
 import type { FillResult } from '../core/types'
+import { debug, error } from '../core/logger'
 
 export interface UseVoiceFormFillOptions {
   llmAdapter: LLMAdapter
@@ -16,18 +17,20 @@ export interface UseVoiceFormFillOptions {
 export function useVoiceFormFill(options: UseVoiceFormFillOptions) {
   const loading = ref(false)
   const result = ref<FillResult | null>(null)
-  const error = ref<string | null>(null)
+  const err = ref<string | null>(null)
   const controller = ref<AbortController | null>(null)
 
   const hasResult = computed(() => result.value !== null)
-  const hasError = computed(() => error.value !== null)
+  const hasError = computed(() => err.value !== null)
 
   async function execute(userText: string): Promise<FillResult | null> {
     if (loading.value || !userText.trim()) return null
 
+    debug('useVoiceFormFill.execute starting, userText length:', userText.length)
+
     loading.value = true
     result.value = null
-    error.value = null
+    err.value = null
 
     const abortController = new AbortController()
     controller.value = abortController
@@ -41,6 +44,8 @@ export function useVoiceFormFill(options: UseVoiceFormFillOptions) {
         }
       })
 
+      debug('Flattened form data:', allItems.length, 'items from', formData.length, 'forms')
+
       const res = await processVoiceFill(userText, allItems, {
         llmAdapter: options.llmAdapter,
         apiKey: options.apiKey,
@@ -53,14 +58,19 @@ export function useVoiceFormFill(options: UseVoiceFormFillOptions) {
       options.onSuccess?.(res)
 
       if (res.failed.length && res.success.length === 0) {
-        error.value = 'No fields matched. Please check your input.'
+        err.value = 'No fields matched. Please check your input.'
       }
 
+      debug('useVoiceFormFill.execute complete, success:', res.success, 'failed:', res.failed)
       return res
     } catch (e: unknown) {
-      if (e instanceof DOMException && e.name === 'AbortError') return null
+      if (e instanceof DOMException && e.name === 'AbortError') {
+        debug('useVoiceFormFill.execute aborted')
+        return null
+      }
       const msg = e instanceof Error ? e.message : 'Unknown error'
-      error.value = msg
+      err.value = msg
+      error('useVoiceFormFill.execute error:', msg)
       options.onError?.(msg)
       return null
     } finally {
@@ -70,19 +80,21 @@ export function useVoiceFormFill(options: UseVoiceFormFillOptions) {
   }
 
   function cancel(): void {
+    debug('useVoiceFormFill.cancel')
     controller.value?.abort()
     loading.value = false
   }
 
   function reset(): void {
+    debug('useVoiceFormFill.reset')
     result.value = null
-    error.value = null
+    err.value = null
   }
 
   return {
     loading,
     result,
-    error,
+    error: err,
     hasResult,
     hasError,
     execute,

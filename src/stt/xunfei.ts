@@ -1,4 +1,5 @@
 import type { STTAdapter, STTState, STTError, STTStartOptions } from './types'
+import { debug } from '../core/logger'
 
 export interface XunfeiSTTConfig {
   appId: string
@@ -111,6 +112,7 @@ export class XunfeiSTTAdapter implements STTAdapter {
   }
 
   start(_options?: STTStartOptions): void {
+    debug('Xunfei start')
     if (!this.isSupported()) {
       this.emitError({
         code: 'NOT_SUPPORTED',
@@ -175,6 +177,7 @@ export class XunfeiSTTAdapter implements STTAdapter {
   }
 
   stop(): void {
+    debug('Xunfei stop')
     this.scriptProcessor?.disconnect()
     if (this.ws) {
       // 发送结束帧
@@ -192,6 +195,7 @@ export class XunfeiSTTAdapter implements STTAdapter {
   }
 
   cancel(): void {
+    debug('Xunfei cancel')
     if (this.ws) {
       this.ws.close()
       this.ws = null
@@ -274,6 +278,7 @@ export class XunfeiSTTAdapter implements STTAdapter {
     this.ws = new WebSocket(wsUrl)
 
     this.ws.onopen = () => {
+      debug('Xunfei WebSocket connected')
       // 发送初始化参数
       const params = {
         common: { app_id: appId },
@@ -337,6 +342,7 @@ export class XunfeiSTTAdapter implements STTAdapter {
     }
 
     if (jsonData.code === 0 && jsonData.data?.status === 2) {
+      debug('Xunfei recognition done')
       this.ws?.close()
       this.resultCb?.(this.resultTextTemp || this.resultText, true)
       this.setState('done')

@@ -1,4 +1,5 @@
 import type { FormField } from './types'
+import { debug, warn } from './logger'
 
 /**
  * 从 childrenList 递归提取表单字段结构
@@ -12,6 +13,8 @@ export function extractFormStructure(
   for (const item of childrenList) {
     const ct = String(item.componentType ?? '')
     const title = parentTitle ? `${parentTitle}-${item.title}` : item.title
+
+    debug('Extracting field:', title, 'componentType:', ct)
 
     switch (ct) {
       case '0': {
@@ -28,6 +31,7 @@ export function extractFormStructure(
         const options = (item.childrenList || []).map(
           (c: any) => c.title || c.name || ''
         )
+        debug('Select options for', title, ':', options)
         fields.push({
           label: title,
           type: 'select',
@@ -79,8 +83,8 @@ export function extractFormStructure(
       }
 
       default:
-        console.warn(
-          `[VoiceFormFill] Unknown componentType: "${ct}", title: "${item.title}", treating as input`
+        warn(
+          `Unknown componentType: "${ct}", title: "${item.title}", treating as input`
         )
         fields.push({
           label: title,

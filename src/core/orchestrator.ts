@@ -2,6 +2,7 @@ import type { FieldMeta, FillResult } from './types'
 import type { LLMAdapter } from '../llm/types'
 import { extractFormStructure } from './extractor'
 import { fillFormByMapping } from './filler'
+import { debug } from './logger'
 
 export interface OrchestratorOptions {
   llmAdapter: LLMAdapter
@@ -19,7 +20,10 @@ export async function processVoiceFill(
   childrenList: Record<string, any>[],
   options: OrchestratorOptions
 ): Promise<FillResult> {
+  const t0 = performance.now()
+
   const fields = extractFormStructure(childrenList)
+  debug('Extracted', fields.length, 'form fields from', childrenList.length, 'children')
   if (fields.length === 0) {
     throw new Error('No fillable fields found in form data')
   }
@@ -30,6 +34,9 @@ export async function processVoiceFill(
     options: opts?.length ? opts : undefined,
   }))
 
+  debug('Calling LLM adapter:', options.llmAdapter.name, 'model:', options.model ?? options.llmAdapter.defaultModel)
+  const t1 = performance.now()
+
   const mapping = await options.llmAdapter.call({
     apiKey: options.apiKey,
     baseUrl: options.baseUrl ?? options.llmAdapter.defaultBaseUrl,
@@ -39,5 +46,9 @@ export async function processVoiceFill(
     signal: options.signal,
   })
 
-  return fillFormByMapping(mapping, fields)
+  debug('LLM response mapping:', mapping, `(${((performance.now() - t1) / 1000).toFixed(2)}s)`)
+
+  const result = fillFormByMapping(mapping, fields)
+  debug('Fill result:', result, `(total: ${((performance.now() - t0) / 1000).toFixed(2)}s)`)
+  return result
 }

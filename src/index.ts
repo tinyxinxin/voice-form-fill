@@ -18,6 +18,7 @@ export { fillFieldValue, fillFormByMapping, matchLabel } from './core/filler'
 export { processVoiceFill } from './core/orchestrator'
 export type { FieldMeta, FormField, FillResult } from './core/types'
 export type { OrchestratorOptions } from './core/orchestrator'
+export { setDebug, isDebugEnabled } from './core/logger'
 
 // LLM Adapters
 export { DeepSeekAdapter } from './llm/deepseek'

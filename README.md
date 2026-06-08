@@ -128,6 +128,7 @@ function onComplete(result) {
 | `sttConfig` | `object` | — | STT options |
 | `textInput` | `boolean` | `true` | Show text input tab |
 | `visible` | `boolean` | `false` | Panel visibility (v-model supported) |
+| `debug` | `boolean` | `false` | Enable debug logging |
 
 ### Events
 
@@ -146,6 +147,25 @@ function onComplete(result) {
 | `trigger` | `{ toggle, recording }` | Custom trigger button |
 | `header` | `{ title, close }` | Custom panel header |
 | `result` | `{ success, failed, loading }` | Custom result display |
+
+### Debug Logging
+
+Enable detailed logs for troubleshooting using the `debug` prop or the `setDebug` API:
+
+```vue
+<!-- Component prop -->
+<VoiceFormFill :debug="true" ... />
+```
+
+```typescript
+// Programmatic API
+import { setDebug } from 'voice-form-fill'
+
+setDebug(true)  // enable
+setDebug(false) // disable (default)
+```
+
+All logs are prefixed with `[VoiceFormFill]` and include timing info for LLM calls, STT state changes, field extraction, matching, and filling details. Warnings and errors always print regardless of debug setting.
 
 ## Advanced Usage
 

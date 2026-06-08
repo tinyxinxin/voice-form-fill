@@ -1,4 +1,5 @@
 import type { STTAdapter, STTState, STTError, STTStartOptions } from './types'
+import { debug } from '../core/logger'
 
 /**
  * 浏览器 Web Speech API 适配器（免费，Chrome/Edge 内置）
@@ -13,7 +14,9 @@ export class WebSpeechSTTAdapter implements STTAdapter {
   private sttState: STTState = 'idle'
 
   isSupported(): boolean {
-    return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window
+    const supported = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window
+    debug('WebSpeech supported:', supported)
+    return supported
   }
 
   start(options?: STTStartOptions): void {
@@ -35,8 +38,11 @@ export class WebSpeechSTTAdapter implements STTAdapter {
     this.recognition.continuous = options?.continuous ?? true
     this.recognition.interimResults = options?.interimResults ?? true
 
+    debug('WebSpeech starting, lang:', this.recognition.lang, 'continuous:', this.recognition.continuous)
+
     this.recognition.onstart = () => this.setState('recording')
     this.recognition.onend = () => {
+      debug('WebSpeech onend, state:', this.sttState)
       if (this.sttState === 'recording') this.setState('done')
     }
     this.recognition.onerror = (event: any) => {
@@ -65,10 +71,12 @@ export class WebSpeechSTTAdapter implements STTAdapter {
   }
 
   stop(): void {
+    debug('WebSpeech stop')
     this.recognition?.stop()
   }
 
   cancel(): void {
+    debug('WebSpeech cancel')
     this.recognition?.abort()
     this.setState('idle')
   }

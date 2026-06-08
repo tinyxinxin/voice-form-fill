@@ -2,6 +2,7 @@ import { ref, onUnmounted, watch } from 'vue'
 import type { STTAdapter, STTState, STTError } from '../stt/types'
 import { WebSpeechSTTAdapter } from '../stt/web-speech'
 import { XunfeiSTTAdapter, type XunfeiSTTConfig } from '../stt/xunfei'
+import { debug, warn } from '../core/logger'
 
 export type STTAdapterType = 'web-speech' | 'xunfei' | 'none'
 
@@ -31,7 +32,7 @@ export function useSttRecorder(options: UseSttRecorderOptions) {
       case 'xunfei': {
         const cfg = options.sttConfig?.xunfei
         if (!cfg?.appId || !cfg?.wsUrl) {
-          console.warn('[VoiceFormFill] Xunfei adapter requires appId and wsUrl')
+          warn('Xunfei adapter requires appId and wsUrl')
           return null
         }
         return new XunfeiSTTAdapter(cfg)
@@ -44,6 +45,7 @@ export function useSttRecorder(options: UseSttRecorderOptions) {
   }
 
   function start(): void {
+    debug('STT start, adapter:', options.adapter)
     sttAdapter = createAdapter()
     if (!sttAdapter) {
       options.onError?.({
@@ -65,10 +67,12 @@ export function useSttRecorder(options: UseSttRecorderOptions) {
     interimText.value = ''
 
     sttAdapter.onStateChange((state) => {
+      debug('STT state changed:', state)
       sttState.value = state
     })
 
     sttAdapter.onResult((text, isFinal) => {
+      debug('STT result:', isFinal ? 'FINAL' : 'interim', text)
       interimText.value = text
       options.onText?.(text, isFinal)
       if (isFinal) {
@@ -89,11 +93,13 @@ export function useSttRecorder(options: UseSttRecorderOptions) {
   }
 
   function stop(): void {
+    debug('STT stop')
     sttAdapter?.stop()
     isRecording.value = false
   }
 
   function cancel(): void {
+    debug('STT cancel')
     sttAdapter?.cancel()
     isRecording.value = false
     interimText.value = ''
@@ -102,6 +108,7 @@ export function useSttRecorder(options: UseSttRecorderOptions) {
   watch(
     () => options.adapter,
     () => {
+      debug('STT adapter changed:', options.adapter)
       sttAdapter?.destroy()
       sttAdapter = null
       isRecording.value = false

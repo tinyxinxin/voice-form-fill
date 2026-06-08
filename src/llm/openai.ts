@@ -1,5 +1,6 @@
 import type { LLMAdapter, LLMCallOptions } from './types'
 import { buildPrompt, parseJsonFromLLMResponse } from './types'
+import { debug } from '../core/logger'
 
 export class OpenAIAdapter implements LLMAdapter {
   readonly name = 'openai'
@@ -18,23 +19,29 @@ export class OpenAIAdapter implements LLMAdapter {
       maxTokens = 2000,
     } = options
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const url = `${baseUrl}/chat/completions`
+    const body = {
+      model: model ?? this.defaultModel,
+      messages: [
+        {
+          role: 'user',
+          content: buildPrompt(formStructure, userText),
+        },
+      ],
+      temperature,
+      max_tokens: maxTokens,
+    }
+
+    debug('OpenAI API call:', url, 'model:', body.model)
+    const t0 = performance.now()
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: model ?? this.defaultModel,
-        messages: [
-          {
-            role: 'user',
-            content: buildPrompt(formStructure, userText),
-          },
-        ],
-        temperature,
-        max_tokens: maxTokens,
-      }),
+      body: JSON.stringify(body),
       signal,
     })
 
@@ -46,6 +53,7 @@ export class OpenAIAdapter implements LLMAdapter {
     }
 
     const data = await response.json()
+    debug('OpenAI API response:', `(${((performance.now() - t0) / 1000).toFixed(2)}s)`)
     const content = data.choices?.[0]?.message?.content
     if (!content) throw new Error('OpenAI API returned empty response')
 

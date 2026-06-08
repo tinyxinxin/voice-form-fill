@@ -1,4 +1,5 @@
 import type { FormField } from './types'
+import { debug, warn, error } from './logger'
 
 function normalize(text: string): string {
   return text.replace(/[\s\n\r*:：#：、，,。.]/g, '').toLowerCase()
@@ -12,15 +13,22 @@ export function matchLabel(target: string, labels: string[]): string | null {
 
   // 精确匹配
   for (const label of labels) {
-    if (normalize(label) === n) return label
+    if (normalize(label) === n) {
+      debug('Exact label match:', target, '->', label)
+      return label
+    }
   }
 
   // 包含匹配
   for (const label of labels) {
     const nl = normalize(label)
-    if (nl.includes(n) || n.includes(nl)) return label
+    if (nl.includes(n) || n.includes(nl)) {
+      debug('Fuzzy label match:', target, '->', label)
+      return label
+    }
   }
 
+  debug('No label match for:', target, 'available labels:', labels)
   return null
 }
 
@@ -37,6 +45,7 @@ export function fillFieldValue(field: FormField, value: unknown): boolean {
     switch (ct) {
       case '0': {
         item.value = value
+        debug('Filled input field', field.label, ':', value)
         return true
       }
 
@@ -47,6 +56,7 @@ export function fillFieldValue(field: FormField, value: unknown): boolean {
         )
         if (matched) {
           item.value = matched.title || matched.name || strValue
+          debug('Filled select field', field.label, ':', item.value)
         } else {
           const fuzzy = (item.childrenList || []).find((c: any) => {
             const t = c.title || c.name || ''
@@ -55,6 +65,7 @@ export function fillFieldValue(field: FormField, value: unknown): boolean {
           item.value = fuzzy
             ? fuzzy.title || fuzzy.name || strValue
             : strValue
+          debug('Filled select field (fuzzy)', field.label, ':', item.value)
         }
         return true
       }
@@ -79,11 +90,13 @@ export function fillFieldValue(field: FormField, value: unknown): boolean {
 
         item.isChecked = isChecked
         item.value = checkedTitles
+        debug('Filled checkbox field', field.label, ':', checkedTitles)
         return true
       }
 
       case '5': {
         item.value = value
+        debug('Filled date field', field.label, ':', value)
         return true
       }
 
@@ -98,24 +111,26 @@ export function fillFieldValue(field: FormField, value: unknown): boolean {
                 child.value = childValue
               }
             }
+            debug('Filled complex field', field.label, ':', value)
             return true
           }
           return false
         }
         item.value = value
+        debug('Filled complex/fallback field', field.label, ':', value)
         return true
       }
 
       default: {
-        console.warn(
-          `[VoiceFormFill] Filling unknown componentType: "${ct}", attempting direct value assignment`
+        warn(
+          `Filling unknown componentType: "${ct}", attempting direct value assignment`
         )
         item.value = value
         return true
       }
     }
   } catch (e) {
-    console.error(`Fill field "${field.label}" failed:`, e)
+    error(`Fill field "${field.label}" failed:`, e)
     return false
   }
 }
@@ -132,11 +147,15 @@ export function fillFormByMapping(
   const failed: string[] = []
 
   for (const [key, value] of Object.entries(mapping)) {
-    if (value === null || value === undefined || value === '') continue
+    if (value === null || value === undefined || value === '') {
+      debug('Skipping empty value for key:', key)
+      continue
+    }
 
     const matchedLabel = matchLabel(key, labels)
     if (!matchedLabel) {
       failed.push(key)
+      debug('No matching field for LLM key:', key)
       continue
     }
 
