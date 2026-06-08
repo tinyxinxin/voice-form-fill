@@ -26,12 +26,12 @@
 
     <!-- 遮罩 -->
     <Transition name="vff-fade">
-      <div v-if="visible" class="vff-overlay" @click="togglePanel" />
+      <div v-if="panelVisible" class="vff-overlay" @click="togglePanel" />
     </Transition>
 
     <!-- 底部面板 -->
     <Transition name="vff-slide">
-      <div v-if="visible" class="vff-panel">
+      <div v-if="panelVisible" class="vff-panel">
         <!-- Header -->
         <div class="vff-panel-header">
           <span class="vff-panel-title">{{ title }}</span>
