@@ -39,13 +39,37 @@ export function useVoiceFormFill(options: UseVoiceFormFillOptions) {
       const raw = options.formData()
       const formData = Array.isArray(raw) ? raw : [raw]
       const allItems: Record<string, any>[] = []
+      let isFlat = false
+
       formData.forEach((form) => {
         if (form.childrenList?.length) {
           allItems.push(...form.childrenList)
+        } else if (typeof form === 'object' && form !== null) {
+          // Flat object mode: auto-generate items from top-level keys
+          isFlat = true
+          const keys = Object.keys(form).filter(
+            (k) => typeof form[k] !== 'function'
+          )
+          keys.forEach((key) => {
+            allItems.push({
+              title: key,
+              componentType: '0',
+              value: form[key],
+              _flatKey: key,
+              _flatParent: form,
+            })
+          })
         }
       })
 
-      debug('Flattened form data:', allItems.length, 'items from', formData.length, 'forms')
+      debug(
+        'Flattened form data:',
+        allItems.length,
+        'items from',
+        formData.length,
+        'forms',
+        isFlat ? '(flat mode)' : ''
+      )
 
       const res = await processVoiceFill(userText, allItems, {
         llmAdapter: options.llmAdapter,
@@ -54,6 +78,15 @@ export function useVoiceFormFill(options: UseVoiceFormFillOptions) {
         model: options.model ?? options.llmAdapter.defaultModel,
         signal: abortController.signal,
       })
+
+      // Sync flat object values back to the original object
+      if (isFlat) {
+        allItems.forEach((item) => {
+          if (item._flatParent && item._flatKey) {
+            item._flatParent[item._flatKey] = item.value
+          }
+        })
+      }
 
       result.value = res
       options.onSuccess?.(res)
