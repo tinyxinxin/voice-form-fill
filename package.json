@@ -1,6 +1,6 @@
 {
   "name": "voice-form-fill",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Voice/text-to-form auto-filling component for Vue 3. Speak or type natural language, and an LLM extracts structured data to fill form fields.",
   "keywords": [
     "vue",

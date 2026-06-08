@@ -35,6 +35,7 @@
     </div>
 
     <VoiceFormFill
+      :debug="true"
       :form-data="formData"
       :api-key="apiKey"
       title="Voice Form Fill"

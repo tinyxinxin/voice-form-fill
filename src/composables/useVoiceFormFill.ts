@@ -36,7 +36,8 @@ export function useVoiceFormFill(options: UseVoiceFormFillOptions) {
     controller.value = abortController
 
     try {
-      const formData = options.formData()
+      const raw = options.formData()
+      const formData = Array.isArray(raw) ? raw : [raw]
       const allItems: Record<string, any>[] = []
       formData.forEach((form) => {
         if (form.childrenList?.length) {
