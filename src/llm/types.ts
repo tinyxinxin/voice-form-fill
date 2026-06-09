@@ -11,11 +11,26 @@ export interface LLMCallOptions {
   maxTokens?: number
 }
 
+/** 流式回调 */
+export interface StreamCallbacks {
+  /** 每次收到新 token 时调用 */
+  onToken?: (token: string) => void
+  /** 增量解析出新字段时调用 */
+  onField?: (label: string, value: unknown) => void
+  /** 流结束时调用，返回完整 mapping */
+  onComplete?: (mapping: Record<string, unknown>) => void
+  /** 出错时调用 */
+  onError?: (error: Error) => void
+}
+
 export interface LLMAdapter {
   readonly name: string
   readonly defaultBaseUrl: string
   readonly defaultModel: string
+  /** 非流式调用 */
   call(options: LLMCallOptions): Promise<Record<string, unknown>>
+  /** 流式调用，通过 callbacks 实时返回结果 */
+  callStream(options: LLMCallOptions, callbacks: StreamCallbacks): Promise<void>
 }
 
 /**

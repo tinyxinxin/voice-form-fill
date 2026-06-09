@@ -1,5 +1,6 @@
-import type { LLMAdapter, LLMCallOptions } from './types'
+import type { LLMAdapter, LLMCallOptions, StreamCallbacks } from './types'
 import { buildPrompt, parseJsonFromLLMResponse } from './types'
+import { parseSSEStream } from './stream-parser'
 import { debug } from '../core/logger'
 
 export class OpenAIAdapter implements LLMAdapter {
@@ -58,5 +59,56 @@ export class OpenAIAdapter implements LLMAdapter {
     if (!content) throw new Error('OpenAI API returned empty response')
 
     return parseJsonFromLLMResponse(content)
+  }
+
+  async callStream(
+    options: LLMCallOptions,
+    callbacks: StreamCallbacks
+  ): Promise<void> {
+    const {
+      apiKey,
+      baseUrl,
+      model,
+      formStructure,
+      userText,
+      signal,
+      temperature = 0.1,
+      maxTokens = 2000,
+    } = options
+
+    const url = `${baseUrl}/chat/completions`
+    const body = {
+      model: model ?? this.defaultModel,
+      messages: [
+        {
+          role: 'user',
+          content: buildPrompt(formStructure, userText),
+        },
+      ],
+      temperature,
+      max_tokens: maxTokens,
+      stream: true,
+    }
+
+    debug('OpenAI API stream call:', url, 'model:', body.model)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+      signal,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(
+        `OpenAI API error (${response.status}): ${response.statusText}${errorText ? ' - ' + errorText : ''}`
+      )
+    }
+
+    await parseSSEStream(response, callbacks)
   }
 }

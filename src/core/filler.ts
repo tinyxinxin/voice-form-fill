@@ -176,3 +176,52 @@ export function fillFormByMapping(
 
   return { success, failed }
 }
+
+/**
+ * 带逐字动画的回填：仅对文本类字段（input/date）做 typewriter 效果，
+ * 固定时长内完成，不受内容长度影响；下拉/复选等非文本字段即时回填。
+ *
+ * @param field - 目标字段
+ * @param value - 填充值
+ * @param duration - 动画总时长（毫秒），默认 120
+ */
+export function typewriteFieldValue(
+  field: FormField,
+  value: unknown,
+  duration = 120
+): void {
+  const ct = String(field._item?.componentType ?? '')
+
+  // 非文本字段（下拉、复选等）以及数组/对象值直接回填，无需动画
+  if (
+    ct === '1' ||
+    ct === '2' ||
+    ct === '4' ||
+    ct === '7' ||
+    Array.isArray(value) ||
+    (typeof value === 'object' && value !== null)
+  ) {
+    fillFieldValue(field, value)
+    return
+  }
+
+  const strValue = String(value ?? '')
+
+  // 太短的值直接赋值
+  if (strValue.length <= 2) {
+    fillFieldValue(field, value)
+    return
+  }
+
+  // 固定时长内匀速逐字填充
+  const delay = Math.max(Math.floor(duration / strValue.length), 10)
+  let pos = 0
+
+  const timer = setInterval(() => {
+    pos++
+    fillFieldValue(field, strValue.slice(0, pos))
+    if (pos >= strValue.length) {
+      clearInterval(timer)
+    }
+  }, delay)
+}

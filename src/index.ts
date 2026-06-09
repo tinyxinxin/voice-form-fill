@@ -14,8 +14,13 @@ export type {
 
 // Core
 export { extractFormStructure } from './core/extractor'
-export { fillFieldValue, fillFormByMapping, matchLabel } from './core/filler'
-export { processVoiceFill } from './core/orchestrator'
+export {
+  fillFieldValue,
+  fillFormByMapping,
+  matchLabel,
+  typewriteFieldValue,
+} from './core/filler'
+export { processVoiceFill, processVoiceFillStream } from './core/orchestrator'
 export type { FieldMeta, FormField, FillResult } from './core/types'
 export type { OrchestratorOptions } from './core/orchestrator'
 export { setDebug, isDebugEnabled } from './core/logger'
@@ -25,7 +30,10 @@ export { DeepSeekAdapter } from './llm/deepseek'
 export { OpenAIAdapter } from './llm/openai'
 export { GenericLLMAdapter } from './llm/generic'
 export { buildPrompt, parseJsonFromLLMResponse } from './llm/types'
-export type { LLMAdapter, LLMCallOptions } from './llm/types'
+export type { LLMAdapter, LLMCallOptions, StreamCallbacks } from './llm/types'
+
+// Stream Parser
+export { StreamJsonParser, parseSSEStream } from './llm/stream-parser'
 
 // STT Adapters
 export { WebSpeechSTTAdapter } from './stt/web-speech'

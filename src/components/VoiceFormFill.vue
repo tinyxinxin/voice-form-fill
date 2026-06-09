@@ -140,6 +140,26 @@
             <span>{{ loading ? 'Filling...' : 'Fill Form' }}</span>
           </button>
 
+          <!-- 流式返回开关 -->
+          <label v-if="activeTab === 'text'" class="vff-stream-toggle">
+            <span class="vff-stream-toggle-label">Streaming</span>
+            <input
+              v-model="streamEnabled"
+              type="checkbox"
+              class="vff-stream-toggle-input"
+              :disabled="loading"
+            />
+            <span class="vff-stream-toggle-track">
+              <span class="vff-stream-toggle-thumb" />
+            </span>
+          </label>
+
+          <!-- 流式输出展示 -->
+          <div v-if="streamText" class="vff-stream-output">
+            <div class="vff-stream-output-header">AI Stream Output</div>
+            <pre class="vff-stream-output-content">{{ streamText }}</pre>
+          </div>
+
           <!-- 结果展示 -->
           <div v-if="result" class="vff-result">
             <div v-if="result.success.length" class="vff-result-row">
@@ -269,7 +289,16 @@ const userText = ref('')
 const getFormData = () => props.formData
 
 // 语音填充编排
-const { loading, result, error, execute, reset } = useVoiceFormFill({
+const {
+  loading,
+  result,
+  error,
+  execute,
+  executeStream,
+  reset,
+  streamText,
+  streamEnabled,
+} = useVoiceFormFill({
   llmAdapter: adapter.value,
   apiKey: props.apiKey,
   baseUrl: props.llmConfig?.baseUrl,
@@ -331,7 +360,11 @@ async function handleVoiceToggle() {
 async function handleTextSubmit() {
   if (!userText.value.trim()) return
   emit('fill-start')
-  await execute(userText.value.trim())
+  if (streamEnabled.value) {
+    await executeStream(userText.value.trim())
+  } else {
+    await execute(userText.value.trim())
+  }
 }
 </script>
 
@@ -613,7 +646,95 @@ async function handleTextSubmit() {
 }
 
 @keyframes vff-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Stream toggle */
+.vff-stream-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #f7f8fa;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.vff-stream-toggle-label {
+  font-size: 13px;
+  color: #646566;
+}
+
+.vff-stream-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.vff-stream-toggle-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: #c8c9cc;
+  border-radius: 11px;
+  transition: background 0.2s;
+}
+
+.vff-stream-toggle-input:checked + .vff-stream-toggle-track {
+  background: #1989fa;
+}
+
+.vff-stream-toggle-input:disabled + .vff-stream-toggle-track {
+  opacity: 0.5;
+}
+
+.vff-stream-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.vff-stream-toggle-input:checked
+  + .vff-stream-toggle-track
+  .vff-stream-toggle-thumb {
+  transform: translateX(18px);
+}
+
+/* Stream output */
+.vff-stream-output {
+  margin-top: 10px;
+}
+
+.vff-stream-output-header {
+  font-size: 12px;
+  color: #969799;
+  margin-bottom: 4px;
+}
+
+.vff-stream-output-content {
+  padding: 8px 10px;
+  background: #f0f9ff;
+  border: 1px solid #d0e8ff;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #323233;
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 /* 结果 */
