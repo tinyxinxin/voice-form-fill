@@ -14,6 +14,7 @@
 - **🧩 插件式架构** — LLM/STT 采用策略模式，轻松扩展
 - **📦 零依赖** — 仅 Vue 3 作为 peer 依赖，全部使用浏览器原生 API
 - **🎨 精美 UI** — 悬浮麦克风按钮、底部面板、录音/文本双模式、过渡动画
+- **⚡ 流式响应** — LLM 逐 token 实时增量回填表单字段，支持打字机动画
 - **🔌 框架无关核心** — 核心提取/填充逻辑不依赖 Vue
 - **📘 完整 TypeScript** — 类型声明齐全
 
@@ -201,6 +202,24 @@ const result = await processVoiceFill(
 // result: { success: ['姓名', '手机号'], failed: [] }
 ```
 
+#### 流式填充（实时回填）
+
+```typescript
+import { processVoiceFillStream, DeepSeekAdapter } from 'voice-form-fill'
+
+const result = await processVoiceFillStream(
+  '姓名张三，手机号13800138000',
+  childrenList,
+  {
+    llmAdapter: new DeepSeekAdapter(),
+    apiKey: 'sk-xxx',
+  },
+  (token) => console.log(token), // 原始 token 回调
+  true // 启用打字机动画（默认开启）
+)
+// 字段在 LLM 流式输出过程中即时回填，无需等待完整响应
+```
+
 ### 自定义 LLM 适配器
 
 ```typescript
@@ -212,7 +231,17 @@ class MyCustomAdapter implements LLMAdapter {
   readonly defaultModel = 'my-model'
 
   async call(options: LLMCallOptions): Promise<Record<string, unknown>> {
-    // 在这里实现你的调用逻辑
+    // 在这里实现非流式调用逻辑
+  }
+
+  async callStream(
+    options: LLMCallOptions,
+    callbacks: StreamCallbacks
+  ): Promise<void> {
+    // 在这里实现流式调用逻辑
+    callbacks.onToken?.('partial chunk')
+    callbacks.onField?.('label', 'value')
+    callbacks.onComplete?.({ /* 最终结果 */ })
   }
 }
 ```

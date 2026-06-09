@@ -14,6 +14,7 @@
 - **🧩 Pluggable Architecture** — Strategy pattern for LLM/STT adapters, easy to extend
 - **📦 Zero Dependencies** — Only Vue 3 as peer dependency, uses native browser APIs
 - **🎨 Beautiful UI** — Floating mic button, bottom panel with voice/text tabs, animations
+- **⚡ Streaming Response** — Real-time incremental field filling as LLM tokens arrive, with typewriter animation
 - **🔌 Framework-Agnostic Core** — Core extraction/filling logic works without Vue
 - **📘 Full TypeScript** — Complete type declarations included
 
@@ -201,6 +202,25 @@ const result = await processVoiceFill(
 // result: { success: ['Name', 'Phone'], failed: [] }
 ```
 
+#### Streaming (Real-Time Filling)
+
+```typescript
+import { processVoiceFillStream, DeepSeekAdapter } from 'voice-form-fill'
+
+const result = await processVoiceFillStream(
+  'Name is John, phone is 13800138000',
+  childrenList,
+  {
+    llmAdapter: new DeepSeekAdapter(),
+    apiKey: 'sk-xxx',
+  },
+  (token) => console.log(token), // raw token callback
+  true // enable typewriter animation (default)
+)
+// Fields fill incrementally as the LLM streams tokens —
+// no need to wait for the full response.
+```
+
 ### Custom LLM Adapter
 
 ```typescript
@@ -212,7 +232,17 @@ class MyCustomAdapter implements LLMAdapter {
   readonly defaultModel = 'my-model'
 
   async call(options: LLMCallOptions): Promise<Record<string, unknown>> {
-    // Your implementation here
+    // Your non-streaming implementation here
+  }
+
+  async callStream(
+    options: LLMCallOptions,
+    callbacks: StreamCallbacks
+  ): Promise<void> {
+    // Your streaming implementation here
+    callbacks.onToken?.('partial chunk')
+    callbacks.onField?.('label', 'value')
+    callbacks.onComplete?.({ /* final mapping */ })
   }
 }
 ```
